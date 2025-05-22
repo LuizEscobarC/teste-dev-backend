@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
@@ -21,14 +24,17 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Configuração do limitador de taxa para API
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip());
+        });
+
         $this->routes(function () {
-            Route::prefix('api')
-                ->middleware('api')
+            // Rotas da API
+            Route::middleware('api')
+                ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
-            // Não carregar rotas web
-            // Route::middleware('web')
-            //     ->group(base_path('routes/web.php'));
         });
     }
 }
