@@ -39,7 +39,6 @@ class AuthTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['password', 'role']);
 
-        // Invalid email format
         $response = $this->postJson('/api/register', [
             'name' => 'Test User',
             'email' => 'invalid-email',
@@ -51,7 +50,6 @@ class AuthTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['email']);
             
-        // Email already exists
         User::factory()->create(['email' => 'existing@example.com']);
         
         $response = $this->postJson('/api/register', [
