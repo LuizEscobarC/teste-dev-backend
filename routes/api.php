@@ -27,7 +27,7 @@ Route::get('/test', function () {
     return response()->json(['status' => 'API is working!']);
 });
 
-// Exemplo de rota com middleware auth (comentado)
-// Route::middleware('auth:api')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
+// Auth Routes
+Route::post('/register', [\App\Http\Controllers\Api\AuthController::class, 'register']);
+Route::post('/login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
+
