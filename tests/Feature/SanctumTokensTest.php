@@ -42,4 +42,63 @@ class SanctumTokensTest extends TestCase
         $response->assertStatus(200);
         $this->assertDatabaseCount('personal_access_tokens', 1);
     }
+
+    public function test_token_is_deleted_when_user_logs_out(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('test-token')->plainTextToken;
+
+        $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->postJson('/api/logout');
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_sanctum_token_can_access_protected_routes(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('test-token')->plainTextToken;
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson('/api/profile');
+
+        $response->assertStatus(200);
+    }
+
+    public function test_invalid_token_cannot_access_protected_routes(): void
+    {
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer invalid-token',
+        ])->getJson('/api/profile');
+
+        $response->assertStatus(401);
+    }
+
+    public function test_expired_token_cannot_be_used(): void
+    {
+        // Configure Sanctum to use explicit expiration (1 minute)
+        config(['sanctum.expiration' => 1]);
+        
+        $user = User::factory()->create();
+        $token = $user->createToken('test-token')->plainTextToken;
+        
+        // Simula a passagem do tempo forçando a expiração do token
+        // Acessa o token criado e define a data de expiração para o passado
+        // Força o Sanctum a verificar expiração no próximo request
+        $tokenId = explode('|', $token)[0];
+        $accessToken = PersonalAccessToken::findOrFail($tokenId);
+        $accessToken->created_at = now()->subMinutes(60);
+        $accessToken->save();
+        
+        app()->forgetInstance('auth.guard');
+        app()->forgetInstance('auth');
+        
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson('/api/profile');
+        
+        $response->assertStatus(401);
+    }
 }

@@ -29,6 +29,43 @@ class AuthTest extends TestCase
             ]);
     }
 
+    public function test_user_registration_fails_with_invalid_data(): void
+    {
+        $response = $this->postJson('/api/register', [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['password', 'role']);
+
+        // Invalid email format
+        $response = $this->postJson('/api/register', [
+            'name' => 'Test User',
+            'email' => 'invalid-email',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'role' => UserRole::CANDIDATE,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['email']);
+            
+        // Email already exists
+        User::factory()->create(['email' => 'existing@example.com']);
+        
+        $response = $this->postJson('/api/register', [
+            'name' => 'Another User',
+            'email' => 'existing@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'role' => UserRole::CANDIDATE,
+        ]);
+        
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['email']);
+    }
+
     public function test_user_can_login(): void
     {
         $user = User::factory()->create([
@@ -79,5 +116,34 @@ class AuthTest extends TestCase
             ]);
 
         $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_user_can_access_profile(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Profile Test',
+            'email' => 'profile@example.com',
+        ]);
+        $token = $user->createToken('test-token')->plainTextToken;
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson('/api/profile');
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'data' => [
+                    'id' => $user->id,
+                    'name' => 'Profile Test',
+                    'email' => 'profile@example.com',
+                ]
+            ]);
+    }
+
+    public function test_unauthenticated_user_cannot_access_profile(): void
+    {
+        $response = $this->getJson('/api/profile');
+
+        $response->assertStatus(401);
     }
 }
