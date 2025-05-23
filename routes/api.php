@@ -31,3 +31,9 @@ Route::get('/test', function () {
 Route::post('/register', [\App\Http\Controllers\Api\AuthController::class, 'register']);
 Route::post('/login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
 
+Route::middleware('auth:sanctum')->group(function () {
+    // Auth
+    Route::post('/logout', [\App\Http\Controllers\Api\AuthController::class, 'logout']);
+    Route::get('/profile', [\App\Http\Controllers\Api\AuthController::class, 'profile']);
+
+});
