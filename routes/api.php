@@ -37,5 +37,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [\App\Http\Controllers\Api\AuthController::class, 'profile']);
     
     // Users
-    Route::apiResource('users', \App\Http\Controllers\Api\UserController::class);    
+    Route::apiResource('users', \App\Http\Controllers\Api\UserController::class);
+    Route::patch('/users/{id}/toggle-status', [\App\Http\Controllers\Api\UserController::class, 'toggleStatus']);
+    Route::patch('/users/{id}/restore', action: [\App\Http\Controllers\Api\UserController::class, 'restore']);
+
 });
