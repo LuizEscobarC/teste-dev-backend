@@ -4,10 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Filters\UserFilter;
-use App\Http\Requests\UserFilterRequest;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserService
