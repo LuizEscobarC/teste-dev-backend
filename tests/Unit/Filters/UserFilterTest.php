@@ -53,7 +53,7 @@ class UserFilterTest extends TestCase
 
     public function testFilterByIsActive()
     {
-        $request = new Request(['is_active' => 'true']);
+        $request = new Request(['is_active' => true]);
         $builder = Mockery::mock(Builder::class);
         
         $builder->shouldReceive('where')
@@ -174,7 +174,7 @@ class UserFilterTest extends TestCase
     {
         $request = new Request([
             'role' => 'recruiter',
-            'is_active' => 'true',
+            'is_active' => true,
             'name' => 'john'
         ]);
         

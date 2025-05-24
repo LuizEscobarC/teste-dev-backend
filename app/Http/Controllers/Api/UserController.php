@@ -29,15 +29,13 @@ class UserController extends Controller
      */
     public function index(UserFilterRequest $request): UserCollection
     {
-        $orderBy = $request->input('order_by', 'created_at');
-        $orderDirection = $request->input('order_direction', 'desc');
-        $perPage = $request->input('per_page', 15);
+        $data = $request->validated();
+        $orderBy = $data['order_by'] ?? 'created_at';
+        $orderDirection = $data['order_direction'] ?? 'desc';
+        $perPage = $data['per_page'] ?? 15;
         
         $users = $this->userService->getPaginatedUsers(
             $request,
-            $orderBy,
-            $orderDirection,
-            $perPage
         );
         
         return new UserCollection($users);
@@ -105,12 +103,13 @@ class UserController extends Controller
      */
     public function toggleStatus(string $id, Request $request): UserResource
     {
-        $request->validate([
+        $data = $request->validate([
             'is_active' => 'required|boolean',
         ]);
         
         $user = $this->userService->findUserById($id);
-        $user = $this->userService->setUserActiveStatus($user, $request->input('is_active'));
+
+        $user = $this->userService->setUserActiveStatus($user, $data['is_active']);
         
         return new UserResource($user);
     }

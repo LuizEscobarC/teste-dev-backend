@@ -16,11 +16,16 @@ class UserUpdateRequest extends FormRequest
 
     public function rules(): array
     {
+        // TODO: do the user must be update the password in that endpoint?
+        // if the user is not updating the password, we don't need to validate it
         return [
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $this->user,
             'password' => 'sometimes|string|min:8|confirmed',
-            'role' => 'sometimes|in:' . implode(',', [UserRole::RECRUITER, UserRole::CANDIDATE]),
+            'role' => 'sometimes|in:' . implode(',', [
+                UserRole::RECRUITER->value,
+                UserRole::CANDIDATE->value
+            ]),
             'bio' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',

@@ -55,7 +55,7 @@ class UserFilterTest extends TestCase
 
     public function test_is_active_filter(): void
     {
-        $request = Request::create('/', 'GET', ['is_active' => 'true']);
+        $request = Request::create('/', 'GET', ['is_active' => true]);
         $filter = new UserFilter($request);
         $users = $filter->apply(User::query())->get();
 
@@ -121,7 +121,7 @@ class UserFilterTest extends TestCase
     {
         $request = Request::create('/', 'GET', [
             'role' => UserRole::CANDIDATE->value,
-            'is_active' => 'true'
+            'is_active' => true
         ]);
         
         $filter = new UserFilter($request);

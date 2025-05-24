@@ -84,11 +84,14 @@ class SanctumTokensTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('test-token')->plainTextToken;
         
-        // Simula a passagem do tempo forçando a expiração do token
-        // Acessa o token criado e define a data de expiração para o passado
-        // Força o Sanctum a verificar expiração no próximo request
+        // Simulate time passage by forcing token expiration
+        // Access the created token and set its expiration date to the past
+        // Force Sanctum to verify expiration on the next request
         $tokenId = explode('|', $token)[0];
-        $accessToken = PersonalAccessToken::findOrFail($tokenId);
+        $accessToken = PersonalAccessToken::find($tokenId);
+        if (!$accessToken) {
+            $this->fail('Token não encontrado.');
+        }
         $accessToken->created_at = now()->subMinutes(60);
         $accessToken->save();
         

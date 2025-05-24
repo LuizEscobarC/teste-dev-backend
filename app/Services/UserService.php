@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Filters\UserFilter;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -20,7 +21,11 @@ class UserService
 
     public function findUserById(string $id): User
     {
-        return User::findOrFail($id);
+        $user = User::find($id);
+        if (!$user) {
+            throw new ModelNotFoundException("Usuário [$id] não encontrado.");
+        }
+        return $user;
     }
     
     public function findUserByEmail(string $email): ?User
@@ -49,13 +54,17 @@ class UserService
 
     public function restoreUser(string $id): bool
     {
-        $user = User::withTrashed()->findOrFail($id);
+        $user = User::withTrashed()->find($id);
+        if (!$user) {
+            throw new ModelNotFoundException("Usuário [$id] não existe.");
+        }
         return $user->restore();
     }
 
     public function setUserActiveStatus(User $user, bool $active): User
     {
         $user->is_active = $active;
+
         $user->save();
         
         return $user->fresh();
@@ -67,4 +76,6 @@ class UserService
             $data['password'] = bcrypt($data['password']);
         }
     }
+
+    
 }

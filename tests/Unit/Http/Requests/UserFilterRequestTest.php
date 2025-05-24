@@ -79,7 +79,7 @@ class UserFilterRequestTest extends TestCase
     public function testBooleanConversion()
     {
         // We'll test the logic separately since we can't call validated() directly
-        $isActiveTrue = filter_var('true', FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        $isActiveTrue = filter_var(true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         $isActiveFalse = filter_var('false', FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         
         $this->assertTrue($isActiveTrue);

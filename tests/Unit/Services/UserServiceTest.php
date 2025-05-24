@@ -63,7 +63,7 @@ class UserServiceTest extends TestCase
         $this->assertTrue($result->contains('id', $recruiter2->id));
         $this->assertFalse($result->contains('id', $candidate->id));
         
-        $request = new Request(['isActive' => 'true']);
+        $request = new Request(['isActive' => true]);
         $result = $this->userService->getPaginatedUsers($request);
         
         $this->assertEquals(2, $result->total());
@@ -85,7 +85,7 @@ class UserServiceTest extends TestCase
         
         $request = new Request([
             'role' => 'recruiter',
-            'isActive' => 'true'
+            'isActive' => true
         ]);
         $result = $this->userService->getPaginatedUsers($request);
         
