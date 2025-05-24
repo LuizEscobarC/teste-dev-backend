@@ -41,4 +41,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/users/{id}/toggle-status', [\App\Http\Controllers\Api\UserController::class, 'toggleStatus']);
     Route::patch('/users/{id}/restore', action: [\App\Http\Controllers\Api\UserController::class, 'restore']);
 
+    // Job Listings
+    Route::apiResource('job-listings', \App\Http\Controllers\Api\JobListingController::class);
 });
+
+// Public job listings
+Route::get('/public/job-listings', [\App\Http\Controllers\Api\JobListingController::class, 'index']);
+Route::get('/public/job-listings/{id}', [\App\Http\Controllers\Api\JobListingController::class, 'show']);

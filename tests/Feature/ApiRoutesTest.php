@@ -32,4 +32,11 @@ class ApiRoutesTest extends TestCase
                  ->assertJson(['status' => 'API is working!']);
     }
     
+    public function test_public_job_listings_endpoint_returns_successful_response(): void
+    {
+        $response = $this->getJson('/api/public/job-listings');
+        
+        $response->assertStatus(200)
+                 ->assertJsonStructure(['data']);
+    }
 }
