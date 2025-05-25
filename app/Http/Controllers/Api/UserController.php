@@ -94,7 +94,9 @@ class UserController extends Controller
         $user = $this->userService->findUserById($id);
         $this->userService->deleteUser($user);
         
-        return response()->json(['message' => 'User deleted successfully'], 200);
+        return response()->json([
+            'message' => __('messages.deleted_successfully', ['resource' => __('messages.User')])
+        ], 200);
     }
     
     /**
@@ -126,6 +128,84 @@ class UserController extends Controller
     public function restore(string $id): JsonResponse
     {
         $this->userService->restoreUser($id);
-        return response()->json(['message' => 'User restored successfully'], 200);
+        return response()->json([
+            'message' => __('messages.restored_successfully', ['resource' => __('messages.User')])
+        ], 200);
+    }
+
+    /**
+     * Bulk delete multiple users
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function bulkDelete(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|string|exists:users,id'
+        ]);
+        
+        $deletedCount = $this->userService->bulkDeleteUsers($request->input('ids'));
+        
+        return response()->json([
+            'message' => __('messages.bulk_deleted_successfully', [
+                'count' => $deletedCount,
+                'resource' => __('messages.users')
+            ]),
+            'deleted_count' => $deletedCount
+        ], 200);
+    }
+
+    /**
+     * Bulk restore multiple users
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function bulkRestore(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|string'
+        ]);
+        
+        $restoredCount = $this->userService->bulkRestoreUsers($request->input('ids'));
+        
+        return response()->json([
+            'message' => __('messages.bulk_restored_successfully', [
+                'count' => $restoredCount,
+                'resource' => __('messages.users')
+            ]),
+            'restored_count' => $restoredCount
+        ], 200);
+    }
+
+    /**
+     * Bulk toggle status for multiple users
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function bulkToggleStatus(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|string|exists:users,id',
+            'is_active' => 'required|boolean'
+        ]);
+        
+        $updatedCount = $this->userService->bulkToggleUsersStatus(
+            $request->input('ids'),
+            $request->boolean('is_active')
+        );
+        
+        return response()->json([
+            'message' => __('messages.bulk_status_updated_successfully', [
+                'count' => $updatedCount,
+                'resource' => __('messages.users')
+            ]),
+            'updated_count' => $updatedCount
+        ], 200);
     }
 }

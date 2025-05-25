@@ -53,14 +53,16 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Successfully logged out']);
+        return response()->json([
+            'message' => __('messages.logout_successful')
+        ]);
     }
 
     /**
      * Get authenticated user profile
      * 
      * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return \App\Http\Resources\UserResource
      */
     public function profile(Request $request)
     {

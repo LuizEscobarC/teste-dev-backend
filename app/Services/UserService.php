@@ -23,7 +23,7 @@ class UserService
     {
         $user = User::find($id);
         if (!$user) {
-            throw new ModelNotFoundException("Usuário [$id] não encontrado.");
+            throw new ModelNotFoundException(__('messages.user_not_found'));
         }
         return $user;
     }
@@ -52,21 +52,40 @@ class UserService
         return $user->delete();
     }
 
-    public function restoreUser(string $id): bool
+    public function restoreUser(string $id): User
     {
-        $user = User::withTrashed()->find($id);
-        if (!$user) {
-            throw new ModelNotFoundException("Usuário [$id] não existe.");
-        }
-        return $user->restore();
+        $user = User::withTrashed()->findOrFail($id);
+        $user->restore();
+        return $user;
     }
 
-    public function setUserActiveStatus(User $user, bool $active): User
+    public function bulkDeleteUsers(array $ids): int
     {
-        $user->is_active = $active;
-
-        $user->save();
+        $users = User::whereIn('id', $ids)->get();
         
+        $deletedCount = 0;
+        foreach ($users as $user) {
+            if ($user->delete()) {
+                $deletedCount++;
+            }
+        }
+        
+        return $deletedCount;
+    }
+
+    public function bulkRestoreUsers(array $ids): int
+    {
+        return User::withTrashed()->whereIn('id', $ids)->restore();
+    }
+
+    public function bulkToggleUsersStatus(array $ids, bool $isActive): int
+    {
+        return User::whereIn('id', $ids)->update(['is_active' => $isActive]);
+    }
+
+    public function setUserActiveStatus(User $user, bool $isActive): User
+    {
+        $user->update(['is_active' => $isActive]);
         return $user->fresh();
     }
 
