@@ -6,3 +6,16 @@ storage/*.key
 .gitignore
 docker-compose.yml
 Dockerfile
+.gitattributes
+.github
+.editorconfig
+*.md
+tests
+phpunit.xml
+docker-inspect.sh
+run-tests.sh
+update-dependencies.sh
+setup.sh
+.env.example
+README.md
+SETUP_INSTRUCTIONS.md

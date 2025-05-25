@@ -89,5 +89,30 @@ services:
       timeout: 10s
       retries: 3
 
+  # Redis
+  redis-estech:
+    image: redis:alpine
+    container_name: redis-estech-api
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    # Limitação de recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   dbdata:
+  redisdata:

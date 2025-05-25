@@ -8,7 +8,8 @@
         "laravel/tinker": "^2.10",
         "laravel/sanctum": "^4.0",
         "fakerphp/faker": "^1.24",
-        "guzzlehttp/guzzle": "^7.8"
+        "guzzlehttp/guzzle": "^7.8",
+        "predis/predis": "^2.0"
     },
     "autoload": {
         "psr-4": {
@@ -51,5 +52,10 @@
         "laravel/pint": "^1.13",
         "pestphp/pest": "^2.30",
         "pestphp/pest-plugin-laravel": "^2.2"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
     }
 }

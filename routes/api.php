@@ -27,6 +27,33 @@ Route::get('/test', function () {
     return response()->json(['status' => 'API is working!']);
 });
 
+Route::get('/health-redis', function () {
+    try {
+        $redis = \Illuminate\Support\Facades\Redis::connection();
+        
+        $testKey = 'test_key_' . time();
+        $testValue = 'Redis está funcionando! ' . now();
+        
+        $redis->set($testKey, $testValue);
+        $retrieved = $redis->get($testKey);
+        $redis->del($testKey);
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Redis está funcionando corretamente',
+            'test_value' => $retrieved,
+            'client' => config('database.redis.client'),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Erro ao conectar com Redis',
+            'error' => $e->getMessage(),
+            'client' => config('database.redis.client'),
+        ], 500);
+    }
+});
+
 // Auth Routes
 Route::post('/register', [\App\Http\Controllers\Api\AuthController::class, 'register']);
 Route::post('/login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
@@ -44,8 +71,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Job Listings
     Route::apiResource('job-listings', \App\Http\Controllers\Api\JobListingController::class);
 
-    // Job Applications
-    Route::apiResource('job-applications', \App\Http\Controllers\Api\JobApplicationController::class);
+    // // Job Applications
+    // Route::apiResource('job-applications', \App\Http\Controllers\Api\JobApplicationController::class);
 });
 
 // Public job listings 
