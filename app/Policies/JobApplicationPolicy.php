@@ -59,7 +59,7 @@ class JobApplicationPolicy
     public function delete(User $user, JobApplication $jobApplication): bool
     {
         if ($user->isCandidate()) {
-            // Candidates can delete their own applications
+            // Candidates can only delete their own applications
             return $jobApplication->user_id === $user->id;
         }
         
@@ -71,6 +71,28 @@ class JobApplicationPolicy
         return false;
     }
 
+    public function bulkDelete(User $user, array $applicationIds): array
+    {
+        if ($user->isCandidate()) {
+            // Candidates can only delete their own applications
+            return JobApplication::whereIn('id', $applicationIds)
+                ->where('user_id', $user->id)
+                ->pluck('id')
+                ->toArray();
+        }
+        
+        if ($user->isRecruiter()) {
+            // Recruiters can only delete applications for their job listings
+            return JobApplication::whereIn('id', $applicationIds)
+                ->whereHas('jobListing', function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })
+                ->pluck('id')
+                ->toArray();
+        }
+        
+        return [];
+    }
 
     public function restore(User $user, JobApplication $jobApplication): bool
     {

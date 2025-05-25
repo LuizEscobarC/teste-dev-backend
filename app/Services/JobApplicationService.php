@@ -76,7 +76,7 @@ class JobApplicationService
             
             $jobApplication = $query->find($id);
             if (!$jobApplication) {
-                throw new ModelNotFoundException("Aplicação de emprego [$id] não encontrada.");
+                throw new ModelNotFoundException(__('messages.job_application_not_found'));
             }
             
             return new JobApplicationResource($jobApplication);
@@ -90,11 +90,11 @@ class JobApplicationService
             ->first();
             
         if (!$jobListing) {
-            throw new ModelNotFoundException('Listagem de empregos não encontrada ou inativa');
+            throw new ModelNotFoundException(__('messages.job_listing_not_found'));
         }
         
         if ($jobListing->expiration_date && $jobListing->expiration_date->isPast()) {
-            throw new \InvalidArgumentException('A lista de empregos expirou');
+            throw new \InvalidArgumentException(__('messages.application_deadline_passed'));
         }
         
         $existingApplication = JobApplication::where('user_id', $user->id)
@@ -102,11 +102,11 @@ class JobApplicationService
             ->exists();
             
         if ($existingApplication) {
-            throw new \InvalidArgumentException('Você já se inscreveu a este trabalho');
+            throw new \InvalidArgumentException(__('messages.application_already_exists'));
         }
         
         if ($jobListing->user_id === $user->id) {
-            throw new \InvalidArgumentException('Não pode se inscrever na sua própria listagem de empregos');
+            throw new \InvalidArgumentException(__('messages.cannot_apply_own_listing'));
         }
         
         $data['user_id'] = $user->id;
@@ -121,12 +121,12 @@ class JobApplicationService
     {
         $jobApplication = JobApplication::find($id);
         if (!$jobApplication) {
-            throw new ModelNotFoundException("Aplicação de emprego [$id] não encontrada.");
+            throw new ModelNotFoundException(__('messages.job_application_not_found'));
         }
         
         if ($user->isCandidate()) {
             if (!$jobApplication->canBeUpdatedByCandidate()) {
-                throw new \InvalidArgumentException('A aplicação de emprego não pode ser atualizado no status atual');
+                throw new \InvalidArgumentException(__('messages.cannot_update_application_status'));
             }
             $allowedFields = ['cover_letter', 'resume', 'additional_info'];
             $data = array_intersect_key($data, array_flip($allowedFields));
@@ -135,7 +135,7 @@ class JobApplicationService
             if (isset($data['status'])) {
                 $newStatus = ApplicationStatus::tryFrom($data['status']);
                 if ($newStatus && !$this->isValidStatusTransition($jobApplication->status, $newStatus)) {
-                    throw new \InvalidArgumentException('Invalid status transition');
+                    throw new \InvalidArgumentException(__('messages.invalid_status_transition'));
                 }
             }
             $allowedFields = ['status', 'notes'];
@@ -151,11 +151,11 @@ class JobApplicationService
     {
         $jobApplication = JobApplication::find($id);
         if (!$jobApplication) {
-            throw new ModelNotFoundException("Aplicação de emprego [$id] não encontrada.");
+            throw new ModelNotFoundException(__('messages.job_application_not_found'));
         }
         
         if (!$jobApplication->canBeWithdrawn()) {
-            throw new \InvalidArgumentException('O pedido não pode ser retirado no status atual');
+            throw new \InvalidArgumentException(__('messages.cannot_withdraw_application'));
         }
         
         $jobApplication->update(['status' => ApplicationStatus::WITHDRAWN]);
@@ -167,7 +167,7 @@ class JobApplicationService
     {
         $jobApplication = JobApplication::find($id);
         if (!$jobApplication) {
-            throw new ModelNotFoundException("Aplicação de emprego [$id] não encontrada.");
+            throw new ModelNotFoundException(__('messages.job_application_not_found'));
         }
         
         return $jobApplication->delete();
@@ -187,6 +187,44 @@ class JobApplicationService
             ->count();
     }
 
+    public function bulkDeleteJobApplications(array $ids, User $user): int
+    {
+        // Use policy to determine which applications the user can delete
+        $policy = new \App\Policies\JobApplicationPolicy();
+        $allowedIds = $policy->bulkDelete($user, $ids);
+        
+        if (empty($allowedIds)) {
+            throw new \Illuminate\Auth\Access\AuthorizationException(__('messages.forbidden'));
+        }
+        
+        $applications = JobApplication::whereIn('id', $allowedIds)->get();
+        
+        $deletedCount = 0;
+        foreach ($applications as $application) {
+            if ($application->delete()) {
+                $deletedCount++;
+            }
+        }
+        
+        return $deletedCount;
+    }
+
+    public function bulkUpdateApplicationsStatus(array $ids, ApplicationStatus $status, User $user): int
+    {
+        // Only recruiters can bulk update application statuses
+        if (!$user->isRecruiter()) {
+            throw new \Illuminate\Auth\Access\AuthorizationException(__('messages.forbidden'));
+        }
+
+        $query = JobApplication::whereIn('id', $ids);
+        
+        $query->whereHas('jobListing', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        });
+        
+        return $query->update(['status' => $status->value]);
+    }
+
     private function buildApplicationsQuery(JobApplicationFilterRequest $request, array $filters = []): JobApplicationCollection
     {
         $user = $request->user();
@@ -194,6 +232,7 @@ class JobApplicationService
         $orderDirection = $request->input('order_direction', 'desc');
         $perPage = $request->input('per_page', 15);
         
+        // TODO: APPLY PATTERN FACAGE TO THAT JOB APP FILTER
         $query = JobApplication::filter(new JobApplicationFilter($filters));
         
         if ($user->isRecruiter() && !isset($filters['jobListingId'])) {

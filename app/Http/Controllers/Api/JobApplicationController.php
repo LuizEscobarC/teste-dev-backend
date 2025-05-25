@@ -45,7 +45,10 @@ class JobApplicationController extends Controller
             $request->user()
         );
         
-        return response()->json(['data' => $jobApplication], 201);
+        return response()->json([
+            'message' => __('messages.created_successfully', ['resource' => __('messages.JobApplication')]),
+            'data' => $jobApplication
+        ], 201);
     }
 
     /**
@@ -55,7 +58,7 @@ class JobApplicationController extends Controller
     {
         $jobApplication = JobApplication::find($id);
         if (!$jobApplication) {
-            throw new ModelNotFoundException('Aplicação de emprego não encontrada');
+            throw new ModelNotFoundException(__('messages.job_application_not_found'));
         }
         $this->authorize('view', $jobApplication);
         
@@ -71,7 +74,7 @@ class JobApplicationController extends Controller
     {
         $jobApplication = JobApplication::find($id);
         if (!$jobApplication) {
-            throw new ModelNotFoundException('Aplicação de emprego não encontrada');
+            throw new ModelNotFoundException(__('messages.job_application_not_found'));
         }
         $this->authorize('update', $jobApplication);
         
@@ -81,7 +84,10 @@ class JobApplicationController extends Controller
             $request->user()
         );
         
-        return response()->json(['data' => $updatedApplication]);
+        return response()->json([
+            'message' => __('messages.updated_successfully', ['resource' => __('messages.JobApplication')]),
+            'data' => $updatedApplication
+        ]);
     }
 
     /**
@@ -91,14 +97,14 @@ class JobApplicationController extends Controller
     {
         $jobApplication = JobApplication::find($id);
         if (!$jobApplication) {
-            throw new ModelNotFoundException('Aplicação de emprego não encontrada');
+            throw new ModelNotFoundException(__('messages.job_application_not_found'));
         }
         $this->authorize('withdraw', $jobApplication);
         
         $withdrawnApplication = $this->jobApplicationService->withdrawJobApplication($id, $request->user());
         
         return response()->json([
-            'message' => 'Aplicação retirada com sucesso',
+            'message' => __('messages.updated_successfully', ['resource' => __('messages.JobApplication')]),
             'data' => $withdrawnApplication
         ]);
     }
@@ -110,12 +116,62 @@ class JobApplicationController extends Controller
     {
         $jobApplication = JobApplication::find($id);
         if (!$jobApplication) {
-            throw new ModelNotFoundException('Aplicação de emprego não encontrada');
+            throw new ModelNotFoundException(__('messages.job_application_not_found'));
         }
         $this->authorize('delete', $jobApplication);
         
         $this->jobApplicationService->deleteJobApplication($id, $request->user());
         
-        return response()->json(['message' => 'Pedido de emprego excluído com sucesso']);
+        return response()->json([
+            'message' => __('messages.deleted_successfully', ['resource' => __('messages.JobApplication')])
+        ]);
+    }
+
+    /**
+     * Bulk delete job applications
+     */
+    public function bulkDelete(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:job_applications,id'
+        ]);
+
+        $deletedCount = $this->jobApplicationService->bulkDeleteJobApplications(
+            $request->input('ids'),
+            $request->user()
+        );
+
+        return response()->json([
+            'message' => __('messages.bulk_deleted_successfully', [
+                'count' => $deletedCount,
+                'resource' => __('messages.job_applications')
+            ])
+        ]);
+    }
+
+    /**
+     * Bulk update job application status
+     */
+    public function bulkUpdateStatus(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:job_applications,id',
+            'status' => 'required|in:pending,under_review,accepted,rejected'
+        ]);
+
+        $updatedCount = $this->jobApplicationService->bulkUpdateApplicationsStatus(
+            $request->input('ids'),
+            \App\Enums\ApplicationStatus::from($request->input('status')),
+            $request->user()
+        );
+
+        return response()->json([
+            'message' => __('messages.bulk_status_updated_successfully', [
+                'count' => $updatedCount,
+                'resource' => __('messages.job_applications')
+            ])
+        ]);
     }
 }
