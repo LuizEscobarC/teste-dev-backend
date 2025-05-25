@@ -36,6 +36,9 @@ class UserController extends Controller
         
         $users = $this->userService->getPaginatedUsers(
             $request,
+            $orderBy,
+            $orderDirection,
+            $perPage
         );
         
         return new UserCollection($users);

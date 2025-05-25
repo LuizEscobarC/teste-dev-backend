@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\JobType;
 use Illuminate\Foundation\Http\FormRequest;
 
 class JobListingUpdateRequest extends FormRequest
@@ -18,8 +19,7 @@ class JobListingUpdateRequest extends FormRequest
             'description' => 'sometimes|string',
             'company_name' => 'sometimes|string|max:255',
             'location' => 'sometimes|string|max:255',
-            // TODO: ADD ENUM LARAVEL CLASS TO CLT,PJ,Freelancer
-            'type' => 'sometimes|in:CLT,PJ,Freelancer',
+            'type' => 'sometimes|in:' . implode(',', array_column(JobType::cases(), 'value')),
             'salary' => 'nullable|numeric',
             'requirements' => 'nullable|array',
             'benefits' => 'nullable|array',

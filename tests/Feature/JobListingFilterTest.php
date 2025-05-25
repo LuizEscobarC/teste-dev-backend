@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\JobType;
 use App\Models\JobListing;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,7 +23,7 @@ class JobListingFilterTest extends TestCase
             'title' => 'PHP Developer',
             'company_name' => 'Tech Solutions',
             'location' => 'Remote',
-            'type' => 'CLT', // Changed to match enum constraint
+            'type' => JobType::CLT->value,
             'salary' => 80000,
             'experience_level' => 'senior',
         ]);
@@ -32,7 +33,7 @@ class JobListingFilterTest extends TestCase
             'title' => 'Frontend Developer',
             'company_name' => 'Creative Agency',
             'location' => 'New York',
-            'type' => 'PJ', // Changed to match enum constraint
+            'type' => JobType::PJ->value,
             'salary' => 60000,
             'experience_level' => 'mid',
         ]);
@@ -42,7 +43,7 @@ class JobListingFilterTest extends TestCase
             'title' => 'Junior Developer',
             'company_name' => 'Startup Inc',
             'location' => 'San Francisco',
-            'type' => 'Freelancer', // Changed to match enum constraint
+            'type' => JobType::FREELANCER->value,
             'salary' => 40000,
             'experience_level' => 'junior',
         ]);

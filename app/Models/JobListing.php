@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\JobType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -34,7 +35,8 @@ class JobListing extends Model
         'benefits' => 'array',
         'expiration_date' => 'date',
         'is_active' => 'boolean',
-        'salary' => 'decimal:2'
+        'salary' => 'decimal:2',
+        'type' => JobType::class
     ];
 
     public function user(): BelongsTo

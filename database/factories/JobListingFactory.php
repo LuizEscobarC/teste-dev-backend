@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\JobType;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -23,7 +24,7 @@ class JobListingFactory extends Factory
             'description' => fake()->paragraphs(5, true),
             'company_name' => fake()->company(),
             'location' => fake()->city() . ', ' . fake()->country(),
-            'type' => fake()->randomElement(['CLT', 'PJ', 'Freelancer']),
+            'type' => fake()->randomElement(JobType::cases())->value,
             'salary' => fake()->numberBetween(3000, 15000),
             'requirements' => $this->generateRequirements(),
             'benefits' => $this->generateBenefits(),
