@@ -67,14 +67,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', \App\Http\Controllers\Api\UserController::class);
     Route::patch('/users/{id}/toggle-status', [\App\Http\Controllers\Api\UserController::class, 'toggleStatus']);
     Route::patch('/users/{id}/restore', [\App\Http\Controllers\Api\UserController::class, 'restore']);
+    // BULKS
+    Route::delete('/users/bulk-delete', [\App\Http\Controllers\Api\UserController::class, 'bulkDelete']);
+    Route::patch('/users/bulk-restore', [\App\Http\Controllers\Api\UserController::class, 'bulkRestore']);
+    Route::patch('/users/bulk-toggle-status', [\App\Http\Controllers\Api\UserController::class, 'bulkToggleStatus']);
 
     // Job Listings
     Route::apiResource('job-listings', \App\Http\Controllers\Api\JobListingController::class);
     Route::patch('/job-listings/{id}/toggle-status', [\App\Http\Controllers\Api\JobListingController::class, 'toggleStatus']);
+    // BULKS
+    Route::delete('/job-listings/bulk-delete', [\App\Http\Controllers\Api\JobListingController::class, 'bulkDelete']);
+    Route::patch('/job-listings/bulk-toggle-status', [\App\Http\Controllers\Api\JobListingController::class, 'bulkToggleStatus']);
 
     // Job Applications
     Route::apiResource('job-applications', \App\Http\Controllers\Api\JobApplicationController::class);
     Route::patch('/job-applications/{id}/withdraw', [\App\Http\Controllers\Api\JobApplicationController::class, 'withdraw']);
+    /// BULKS
+    Route::delete('/job-applications/bulk-delete', [\App\Http\Controllers\Api\JobApplicationController::class, 'bulkDelete']);
+    Route::patch('/job-applications/bulk-update-status', [\App\Http\Controllers\Api\JobApplicationController::class, 'bulkUpdateStatus']);
 });
 
 // Public job listings 
