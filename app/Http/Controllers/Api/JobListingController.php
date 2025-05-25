@@ -8,6 +8,7 @@ use App\Http\Requests\JobListingStoreRequest;
 use App\Http\Requests\JobListingUpdateRequest;
 use App\Models\JobListing;
 use App\Services\JobListingService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
@@ -93,7 +94,10 @@ class JobListingController extends Controller
      */
     public function toggleStatus(Request $request, string $id)
     {
-        $jobListing = JobListing::findOrFail($id);
+        $jobListing = JobListing::find($id);
+        if (!$jobListing) {
+           throw new ModelNotFoundException("Vaga de emprego [$id] não encontrada.");
+        }
         $this->authorize('toggleStatus', $jobListing);
         
         $isActive = $request->boolean('is_active');
