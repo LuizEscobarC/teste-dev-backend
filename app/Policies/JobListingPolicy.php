@@ -26,17 +26,17 @@ class JobListingPolicy
 
     public function update(User $user, JobListing $jobListing): bool
     {
-        return $user->role === UserRole::RECRUITER;
+        return $user->role === UserRole::RECRUITER && $user->id === $jobListing->user_id;
     }
 
     public function delete(User $user, JobListing $jobListing): bool
     {
-        return $user->role === UserRole::RECRUITER;
+        return $user->role === UserRole::RECRUITER && $user->id === $jobListing->user_id;
     }
 
     public function toggleStatus(User $user, JobListing $jobListing): bool
     {
-        return $user->role === UserRole::RECRUITER;
+        return $user->role === UserRole::RECRUITER && $user->id === $jobListing->user_id;
     }
 
     public function restore(User $user, JobListing $jobListing): bool

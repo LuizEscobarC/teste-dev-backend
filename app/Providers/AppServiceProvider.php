@@ -16,5 +16,6 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register observers
         \App\Models\JobListing::observe(\App\Observers\JobListingObserver::class);
+        \App\Models\JobApplication::observe(\App\Observers\JobApplicationObserver::class);
     }
 }

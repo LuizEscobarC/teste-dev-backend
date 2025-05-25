@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ApplicationStatus;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,10 +22,11 @@ class JobApplicationFactory extends Factory
         
         return [
             'job_listing_id' => $jobListing->id,
-            'user_id' => \App\Models\User::where('role', UserRole::RECRUITER)->inRandomOrder()->first()->id ?? \App\Models\User::factory()->create(['role' => UserRole::RECRUITER])->id,
+            'user_id' => \App\Models\User::where('role', UserRole::CANDIDATE)->inRandomOrder()->first()->id 
+                ?? \App\Models\User::factory()->create(['role' => UserRole::CANDIDATE])->id,
             'cover_letter' => fake()->paragraphs(3, true),
             'resume' => 'resumes/' . fake()->uuid() . '.pdf',
-            'status' => fake()->randomElement(['pending', 'reviewed', 'interviewing', 'rejected', 'accepted']),
+            'status' => fake()->randomElement(ApplicationStatus::cases())->value,
             'additional_info' => $this->generateAdditionalInfo(),
             'notes' => fake()->boolean(70) ? fake()->paragraphs(2, true) : null,
         ];

@@ -7,6 +7,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -44,6 +45,11 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Não autorizado.',
                     'error' => 'unauthorized',
                 ], 401),
+
+                $e instanceof NotFoundHttpException => response()->json([
+                    'message' => $e->getMessage() ?: 'Rota não encontrada.',
+                    'error' => 'route_not_found',
+                ], 404),
 
                 $e instanceof ValidationException => (function () use ($e) {
                     $errors = $e->validator->errors()->all();
