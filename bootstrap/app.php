@@ -40,6 +40,11 @@ return Application::configure(basePath: dirname(__DIR__))
                     'error' => 'access_denied',
                 ], 403),
 
+                $e instanceof \Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException => response()->json([
+                    'message' => 'Não autorizado.',
+                    'error' => 'unauthorized',
+                ], 401),
+
                 $e instanceof ValidationException => (function () use ($e) {
                     $errors = $e->validator->errors()->all();
                     $countErrors = $e->validator->errors()->count();
@@ -61,6 +66,11 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Registro não encontrado.',
                     'error' => 'not_found',
                 ], 404),
+
+                $e instanceof \InvalidArgumentException => response()->json([
+                    'message' => $e->getMessage(),
+                    'error' => 'invalid_argument',
+                ], 422),
 
                 $e instanceof \Illuminate\Database\QueryException => response()->json([
                     'message' => 'Erro de consulta ao banco de dados.',

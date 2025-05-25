@@ -70,6 +70,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Job Listings
     Route::apiResource('job-listings', \App\Http\Controllers\Api\JobListingController::class);
+    Route::patch('/job-listings/{id}/toggle-status', [\App\Http\Controllers\Api\JobListingController::class, 'toggleStatus']);
 
     // // Job Applications
     // Route::apiResource('job-applications', \App\Http\Controllers\Api\JobApplicationController::class);

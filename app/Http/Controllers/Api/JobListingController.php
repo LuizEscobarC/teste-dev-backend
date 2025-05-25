@@ -83,4 +83,21 @@ class JobListingController extends Controller
         
         return response()->json(['message' => 'Job listing deleted successfully'], 200);
     }
+
+    /**
+     * Toggle job listing status (activate/deactivate)
+     * 
+     * @param Request $request
+     * @param string $id
+     * @return \App\Http\Resources\JobListingResource
+     */
+    public function toggleStatus(Request $request, string $id)
+    {
+        $jobListing = JobListing::findOrFail($id);
+        $this->authorize('toggleStatus', $jobListing);
+        
+        $isActive = $request->boolean('is_active');
+        
+        return $this->jobListingService->toggleJobListingStatus($id, $isActive);
+    }
 }

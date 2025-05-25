@@ -107,4 +107,16 @@ class JobListingService
         
         return $result;
     }
+
+    public function toggleJobListingStatus(string $id, bool $isActive): JobListingResource
+    {
+        $jobListing = JobListing::find($id);
+        if (!$jobListing) {
+            throw new ModelNotFoundException("Vaga de emprego [$id] não encontrada.");
+        }
+        
+        $jobListing->update(['is_active' => $isActive]);
+        
+        return new JobListingResource($jobListing);
+    }
 }

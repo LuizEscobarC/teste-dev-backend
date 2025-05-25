@@ -26,12 +26,17 @@ class JobListingPolicy
 
     public function update(User $user, JobListing $jobListing): bool
     {
-        return $user->role === UserRole::RECRUITER; // just the owner can update
+        return $user->role === UserRole::RECRUITER;
     }
 
     public function delete(User $user, JobListing $jobListing): bool
     {
-        return $user->role === UserRole::RECRUITER; // jsut the recruiter can delete
+        return $user->role === UserRole::RECRUITER;
+    }
+
+    public function toggleStatus(User $user, JobListing $jobListing): bool
+    {
+        return $user->role === UserRole::RECRUITER;
     }
 
     public function restore(User $user, JobListing $jobListing): bool
@@ -41,6 +46,6 @@ class JobListingPolicy
 
     public function forceDelete(User $user, JobListing $jobListing): bool
     {
-        return  $user->id === $jobListing->user_id; // just the owner can force delete
+        return $user->role === UserRole::RECRUITER && $user->id === $jobListing->user_id;
     }
 }
