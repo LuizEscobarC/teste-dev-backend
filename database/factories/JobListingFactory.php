@@ -24,7 +24,7 @@ class JobListingFactory extends Factory
             'description' => fake()->paragraphs(5, true),
             'company_name' => fake()->company(),
             'location' => fake()->city() . ', ' . fake()->country(),
-            'type' => fake()->randomElement(JobType::cases())->value,
+            'type' => fake()->randomElement(JobType::cases()),
             'salary' => fake()->numberBetween(3000, 15000),
             'requirements' => $this->generateRequirements(),
             'benefits' => $this->generateBenefits(),

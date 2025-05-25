@@ -21,7 +21,7 @@ class JobListingFilterRequest extends FormRequest
             'salaryMin' => ['sometimes', 'numeric', 'min:0'],
             'salaryMax' => ['sometimes', 'numeric', 'min:0', 'gte:salaryMin'],
             'experienceLevel' => ['sometimes', 'string'],
-            'isActive' => ['sometimes', 'boolean'],
+            'isActive' => ['sometimes', 'boolean'], // 1 or 0
             'expirationDate' => ['sometimes', 'array'],
             'expirationDate.from' => ['sometimes', 'date'],
             'expirationDate.to' => ['sometimes', 'date', 'after_or_equal:expirationDate.from'],
