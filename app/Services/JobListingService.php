@@ -16,53 +16,66 @@ class JobListingService
 
     public function getPaginatedJobListings(JobListingFilterRequest $request): JobListingCollection
     {
-        $cacheKey = 'job_listings:' . md5(json_encode($request->validated()));
+        $filters = $request->validated();
+        $cacheKey = 'job_listings:' . md5(json_encode($filters));
         $cacheTTL = 60 * 15;
         
-        if (!$request->has('skip_cache') && Cache::has($cacheKey)) {
-            return Cache::get($cacheKey);
+        $tags = ['job_listings', 'listings'];
+        
+        if (isset($filters['type'])) {
+            $tags[] = "job_type:{$filters['type']}";
         }
-
-        $orderBy = $request->input('order_by', 'created_at');
-        $orderDirection = $request->input('order_direction', 'desc');
-        $perPage = $request->input('per_page', 15);
-        
-        $query = JobListing::filter(new JobListingFilter($request));
-        
-        if ($request->boolean('include_user')) {
-            $query->with('user');
+        if (isset($filters['isactive'])) {
+            $tags[] = $filters['isActive'] ? 'job_status:active' : 'job_status:inactive';
         }
         
-        if ($request->boolean('include_applications')) {
-            $query->with('applications');
-        }
-        
-        $jobListings = $query->orderBy($orderBy, $orderDirection)->paginate($perPage);
-        $response = new JobListingCollection($jobListings);
-        
-        Cache::put($cacheKey, $response, $cacheTTL);
-        
-        return $response;
+        // Cache with tags to meddium granularity
+        return Cache::tags($tags)->remember($cacheKey, $cacheTTL, function () use ($request) {
+            $orderBy = $request->input('order_by', 'created_at');
+            $orderDirection = $request->input('order_direction', 'desc');
+            $perPage = $request->input('per_page', 15);
+            
+            $query = JobListing::filter(new JobListingFilter($request));
+            
+            if ($request->boolean('include_user')) {
+                $query->with('user');
+            }
+            
+            if ($request->boolean('include_applications')) {
+                $query->with('applications');
+            }
+            
+            $jobListings = $query->orderBy($orderBy, $orderDirection)->paginate($perPage);
+            return new JobListingCollection($jobListings);
+        });
     }
 
     public function getJobListingById(string $id, Request $request): JobListingResource
     {
-        $query = JobListing::query();
-        
-        if ($request->has('include_user')) {
-            $query->with('user');
-        }
-        
-        if ($request->has('include_applications')) {
-            $query->with('applications');
-        }
-        
-        $jobListing = $query->find($id);
-        if (!$jobListing) {
-            throw new ModelNotFoundException("Vaga de emprego [$id] não encontrada.");
-        }
-        
-        return new JobListingResource($jobListing);
+        $cacheKey = "job_listing:{$id}:" . md5(serialize([
+            'include_user' => $request->has('include_user'),
+            'include_applications' => $request->has('include_applications'),
+        ]));
+
+        // Cache with tags to meddium granularity
+        return Cache::tags(['job_listings', "job_listing:{$id}"])->remember($cacheKey, 60 * 30, function () use ($id, $request) {
+            $query = JobListing::query();
+            
+            if ($request->has('include_user')) {
+                $query->with('user');
+            }
+            
+            if ($request->has('include_applications')) {
+                $query->with('applications');
+            }
+            
+            $jobListing = $query->find($id);
+            if (!$jobListing) {
+                throw new ModelNotFoundException("Vaga de emprego [$id] não encontrada.");
+            }
+            
+            return new JobListingResource($jobListing);
+        });
     }
 
     public function createJobListing(array $data): JobListingResource
@@ -79,17 +92,8 @@ class JobListingService
             throw new ModelNotFoundException("Vaga de emprego [$id] não encontrada.");
         }
         $jobListing->update($data);
-        
-        return new JobListingResource($jobListing);
-    }
 
-    public function checkUserAuthorization(string $jobListingId, int $userId): bool
-    {
-        $jobListing = JobListing::find($jobListingId);
-        if (!$jobListing) {
-            throw new ModelNotFoundException("Vaga de emprego [$jobListingId] não encontrada.");
-        }
-        return $userId === $jobListing->user_id;
+        return new JobListingResource($jobListing);
     }
 
     public function deleteJobListing(string $id): bool
@@ -98,6 +102,9 @@ class JobListingService
         if (!$jobListing) {
             throw new ModelNotFoundException("Vaga de emprego [$id] não encontrada.");
         }
-        return $jobListing->delete();
+        
+        $result = $jobListing->delete();
+        
+        return $result;
     }
 }
