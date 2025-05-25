@@ -6,6 +6,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -28,6 +29,16 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Não autenticado.',
                     'error' => 'unauthenticated',
                 ], 401),
+
+                $e instanceof \Illuminate\Auth\Access\AuthorizationException => response()->json([
+                    'message' => 'Não autorizado.',
+                    'error' => 'unauthorized',
+                ], 403),
+
+                $e instanceof AccessDeniedHttpException => response()->json([
+                    'message' => 'Acesso negado.',
+                    'error' => 'access_denied',
+                ], 403),
 
                 $e instanceof ValidationException => (function () use ($e) {
                     $errors = $e->validator->errors()->all();

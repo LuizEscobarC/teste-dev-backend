@@ -6,11 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\JobListingFilterRequest;
 use App\Http\Requests\JobListingStoreRequest;
 use App\Http\Requests\JobListingUpdateRequest;
+use App\Models\JobListing;
 use App\Services\JobListingService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
 class JobListingController extends Controller
 {
+    use AuthorizesRequests;
+    
     private JobListingService $jobListingService;
 
     public function __construct(JobListingService $jobListingService)
@@ -33,6 +37,8 @@ class JobListingController extends Controller
      */
     public function store(JobListingStoreRequest $request)
     {
+        $this->authorize('create', JobListing::class);
+        
         $data = $request->validated();
         $data['user_id'] = $request->user()->id;
         
@@ -56,9 +62,8 @@ class JobListingController extends Controller
      */
     public function update(JobListingUpdateRequest $request, string $id)
     {
-        if (!$this->jobListingService->checkUserAuthorization($id, $request->user()->id)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $jobListing = JobListing::findOrFail($id);
+        $this->authorize('update', $jobListing);
         
         $data = $request->validated();
         return $this->jobListingService->updateJobListing($id, $data);
@@ -71,9 +76,8 @@ class JobListingController extends Controller
      */
     public function destroy(Request $request, string $id)
     {
-        if (!$this->jobListingService->checkUserAuthorization($id, $request->user()->id)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $jobListing = JobListing::findOrFail($id);
+        $this->authorize('delete', $jobListing);
         
         $this->jobListingService->deleteJobListing($id);
         
