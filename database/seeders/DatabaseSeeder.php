@@ -10,25 +10,38 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Admin Recruiter',
-            'email' => 'recruiter@example.com',
-            'password' => bcrypt('password'),
-            'role' => UserRole::RECRUITER,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'recruiter@example.com'],
+            [
+                'name' => 'Admin Recruiter',
+                'password' => bcrypt('password'),
+                'role' => UserRole::RECRUITER,
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Admin Candidate',
-            'email' => 'candidate@example.com',
-            'password' => bcrypt('password'),
-            'role' => UserRole::CANDIDATE,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'candidate@example.com'],
+            [
+                'name' => 'Admin Candidate',
+                'password' => bcrypt('password'),
+                'role' => UserRole::CANDIDATE,
+            ]
+        );
         
-        User::factory(8)->create(['role' => UserRole::RECRUITER]);
-        User::factory(20)->create(['role' => UserRole::CANDIDATE]);
+        if (User::where('role', UserRole::RECRUITER)->count() < 10) {
+            User::factory(8)->create(['role' => UserRole::RECRUITER]);
+        }
         
-        \App\Models\JobListing::factory(30)->create();
+        if (User::where('role', UserRole::CANDIDATE)->count() < 22) {
+            User::factory(20)->create(['role' => UserRole::CANDIDATE]);
+        }
         
-        \App\Models\JobApplication::factory(50)->create();
+        if (\App\Models\JobListing::count() < 30) {
+            \App\Models\JobListing::factory(30)->create();
+        }
+        
+        if (\App\Models\JobApplication::count() < 50) {
+            \App\Models\JobApplication::factory(50)->create();
+        }
     }
 }
