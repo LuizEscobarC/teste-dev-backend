@@ -71,7 +71,7 @@ class JobListingService
             
             $jobListing = $query->find($id);
             if (!$jobListing) {
-                throw new ModelNotFoundException("Vaga de emprego [$id] não encontrada.");
+                throw new ModelNotFoundException(__('messages.job_listing_not_found'));
             }
             
             return new JobListingResource($jobListing);
@@ -89,7 +89,7 @@ class JobListingService
     {
         $jobListing = JobListing::find($id);
         if (!$jobListing) {
-            throw new ModelNotFoundException("Vaga de emprego [$id] não encontrada.");
+            throw new ModelNotFoundException(__('messages.job_listing_not_found'));
         }
         $jobListing->update($data);
 
@@ -100,7 +100,7 @@ class JobListingService
     {
         $jobListing = JobListing::find($id);
         if (!$jobListing) {
-            throw new ModelNotFoundException("Vaga de emprego [$id] não encontrada.");
+            throw new ModelNotFoundException(__('messages.job_listing_not_found'));
         }
         
         $result = $jobListing->delete();
@@ -112,11 +112,30 @@ class JobListingService
     {
         $jobListing = JobListing::find($id);
         if (!$jobListing) {
-            throw new ModelNotFoundException("Vaga de emprego [$id] não encontrada.");
+            throw new ModelNotFoundException(__('messages.job_listing_not_found'));
         }
         
         $jobListing->update(['is_active' => $isActive]);
         
         return new JobListingResource($jobListing);
+    }
+
+    public function bulkDeleteJobListings(array $ids): int
+    {
+        $jobListings = JobListing::whereIn('id', $ids)->get();
+        
+        $deletedCount = 0;
+        foreach ($jobListings as $jobListing) {
+            if ($jobListing->delete()) {
+                $deletedCount++;
+            }
+        }
+        
+        return $deletedCount;
+    }
+
+    public function bulkToggleJobListingsStatus(array $ids, bool $isActive): int
+    {
+        return JobListing::whereIn('id', $ids)->update(['is_active' => $isActive]);
     }
 }

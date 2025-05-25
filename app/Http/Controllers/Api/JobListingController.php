@@ -11,6 +11,7 @@ use App\Services\JobListingService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class JobListingController extends Controller
 {
@@ -82,7 +83,9 @@ class JobListingController extends Controller
         
         $this->jobListingService->deleteJobListing($id);
         
-        return response()->json(['message' => 'Job listing deleted successfully'], 200);
+        return response()->json([
+            'message' => __('messages.deleted_successfully', ['resource' => __('messages.JobListing')])
+        ], 200);
     }
 
     /**
@@ -103,5 +106,69 @@ class JobListingController extends Controller
         $isActive = $request->boolean('is_active');
         
         return $this->jobListingService->toggleJobListingStatus($id, $isActive);
+    }
+
+    /**
+     * Bulk delete multiple job listings
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function bulkDelete(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|string|exists:job_listings,id'
+        ]);
+        
+        // Check authorization for each job listing
+        $jobListings = JobListing::whereIn('id', $request->input('ids'))->get();
+        foreach ($jobListings as $jobListing) {
+            $this->authorize('delete', $jobListing);
+        }
+        
+        $deletedCount = $this->jobListingService->bulkDeleteJobListings($request->input('ids'));
+        
+        return response()->json([
+            'message' => __('messages.bulk_deleted_successfully', [
+                'count' => $deletedCount,
+                'resource' => __('messages.job_listings')
+            ]),
+            'deleted_count' => $deletedCount
+        ], 200);
+    }
+
+    /**
+     * Bulk toggle status for multiple job listings
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function bulkToggleStatus(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|string|exists:job_listings,id',
+            'is_active' => 'required|boolean'
+        ]);
+        
+        // Check authorization for each job listing
+        $jobListings = JobListing::whereIn('id', $request->input('ids'))->get();
+        foreach ($jobListings as $jobListing) {
+            $this->authorize('toggleStatus', $jobListing);
+        }
+        
+        $updatedCount = $this->jobListingService->bulkToggleJobListingsStatus(
+            $request->input('ids'),
+            $request->boolean('is_active')
+        );
+        
+        return response()->json([
+            'message' => __('messages.bulk_status_updated_successfully', [
+                'count' => $updatedCount,
+                'resource' => __('messages.job_listings')
+            ]),
+            'updated_count' => $updatedCount
+        ], 200);
     }
 }
