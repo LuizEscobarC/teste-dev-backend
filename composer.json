@@ -9,7 +9,8 @@
         "laravel/sanctum": "^4.0",
         "fakerphp/faker": "^1.24",
         "guzzlehttp/guzzle": "^7.8",
-        "predis/predis": "^2.0"
+        "predis/predis": "^2.0",
+        "laravel/telescope": "*"
     },
     "autoload": {
         "psr-4": {
