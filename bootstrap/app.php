@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ForceJsonResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -23,48 +24,51 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         
         $exceptions->renderable(function (Throwable $e, $request) {
-            if ($e->getPrevious() instanceof ValidationException) {
-                if ($request->expectsJson() || $request->is('api/*')) {
+            return match (true) {
+                $e instanceof \Illuminate\Auth\AuthenticationException => response()->json([
+                    'message' => 'Não autenticado.',
+                    'error' => 'unauthenticated',
+                ], 401),
+
+                $e instanceof ValidationException => (function () use ($e) {
+                    $errors = $e->validator->errors()->all();
+                    $countErrors = $e->validator->errors()->count();
+                    $primaryMessage = array_shift($errors);
+                    if ($countErrors > 1) {
+                        $primaryMessage .= ' '.trans_choice(
+                            key: 'validation.and_more_errors',
+                            number: $countErrors,
+                            replace: ['count' => $countErrors]
+                        );
+                    }
                     return response()->json([
-                        'message' => $e->getMessage(),
+                        'message' => $primaryMessage,
                         'errors' => $e->errors(),
                     ], $e->status);
-                }
-                return null;
-            }
+                })(),
 
-            if ($e->getPrevious() instanceof ModelNotFoundException) {
-                if ($request->expectsJson() || $request->is('api/*')) {
-                    return response()->json([
-                        'message' => 'Registro não encontrado.',
-                        'error' => 'not_found'
-                    ], 404);
-                }
-                return null;
-            }
-            if ($e->getPrevious() instanceof \Illuminate\Database\QueryException) {
-                if ($request->expectsJson() || $request->is('api/*')) {
-                    return response()->json([
-                        'message' => 'Erro de consulta ao banco de dados.',
-                        'error' => 'query_exception'
-                    ], 500);
-                }
-                return null;
-            }
+                $e instanceof ModelNotFoundException => response()->json([
+                    'message' => 'Registro não encontrado.',
+                    'error' => 'not_found',
+                ], 404),
 
-            if ($e->getPrevious() instanceof TypeError) {
-                if (($request->expectsJson() || $request->is('api/*')) && 
-                    str_contains($e->getMessage(), 'must be of type') && 
-                    str_contains($e->getMessage(), 'none returned')) {
-                    return response()->json([
+                $e instanceof \Illuminate\Database\QueryException => response()->json([
+                    'message' => 'Erro de consulta ao banco de dados.',
+                    'error' => 'query_exception',
+                ], 500),
+
+                default => app()->environment('local') || app()->environment('development')
+                    ? response()->json([
                         'message' => $e->getMessage(),
-                        'error' => $e->getTraceAsString(),
-                    ], 404);
-                }
-                return null;
-            }
-
-            return null;
+                        'exception' => get_class($e),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => collect($e->getTrace())->map(fn ($trace) => \Illuminate\Support\Arr::except($trace, ['args']))->all(),
+                    ], 500)
+                    : response()->json([
+                        'message' => 'Ocorreu um erro ao processar sua solicitação... tente novamente mais tarde.',
+                    ], 500),
+            };
         });
 
     })->create();
