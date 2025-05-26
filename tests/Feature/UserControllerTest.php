@@ -75,7 +75,7 @@ class UserControllerTest extends TestCase
         ])->patchJson('/api/users/' . $user->id . '/restore');
 
         $response->assertStatus(200)
-            ->assertJsonPath('message', 'User restored successfully');
+            ->assertJsonPath('message', __('messages.restored_successfully', ['resource' => __('messages.User')]));
 
         $this->assertDatabaseHas('users', [
             'id' => $user->id,

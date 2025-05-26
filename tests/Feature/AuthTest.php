@@ -110,7 +110,7 @@ class AuthTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'message' => 'Successfully logged out',
+                'message' => __('messages.logout_successful'),
             ]);
 
         $this->assertDatabaseCount('personal_access_tokens', 0);

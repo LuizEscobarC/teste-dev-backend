@@ -218,7 +218,7 @@ class JobApplicationTest extends TestCase
         ])->patchJson('/api/job-applications/' . $application->id . '/withdraw');
 
         $response->assertStatus(200);
-        $response->assertJsonFragment(['message' => 'Aplicação retirada com sucesso']);
+        $response->assertJsonFragment(['message' => __('messages.updated_successfully', ['resource' => __('messages.JobApplication')])]);
         
         $this->assertDatabaseHas('job_applications', [
             'id' => $application->id,

@@ -152,8 +152,8 @@ class UserServiceTest extends TestCase
         $this->assertTrue($result);
         $this->assertSoftDeleted('users', ['id' => $user->id]);
         
-        $result = $this->userService->restoreUser($user->id);
-        $this->assertTrue($result);
+        $restoredUser = $this->userService->restoreUser($user->id);
+        $this->assertInstanceOf(User::class, $restoredUser);
         $this->assertDatabaseHas('users', ['id' => $user->id, 'deleted_at' => null]);
     }
     
