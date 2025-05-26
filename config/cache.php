@@ -105,4 +105,18 @@ return [
 
     'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_cache_'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cache TTL Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Define specific TTL (Time To Live) values for different cache types.
+    | Values are in seconds.
+    |
+    */
+
+    'ttl' => [
+        'climate_analysis' => env('CACHE_TTL_CLIMATE_ANALYSIS', 300), // 5 minutes
+    ],
+
 ];

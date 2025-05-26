@@ -1,51 +1,35 @@
 #!/bin/bash
-set -e
 
 echo "=== CONTAINER WEB STARTUP ==="
 
+# Wait for database
 echo "Aguardando banco de dados..."
-max_attempts=30
-attempt=0
+while ! nc -z db-estech-api 3306; do
+  sleep 1
+done
 
-# until [ $attempt -ge $max_attempts ]; do
-#     if php artisan tinker --execute="DB::connection()->getPdo(); echo 'DB Connected';" 2>/dev/null | grep -q "DB Connected"; then
-#         echo "Banco de dados conectado!"
-#         break
-#     fi
-    
-#     attempt=$((attempt + 1))
-#     echo "Tentativa $attempt/$max_attempts - Banco de dados não está pronto - aguardando..."
-#     sleep 2
-# done
+# Aguardar vendor ser instalado pelo setup.sh
+while [ ! -f "vendor/autoload.php" ]; do
+    echo "⏳ Aguardando vendor/ (será instalado pelo setup.sh)..."
+    sleep 2
+done
 
-# if [ $attempt -ge $max_attempts ]; then
-#     echo "ERRO: Não foi possível conectar ao banco de dados após $max_attempts tentativas"
-#     exit 1
-# fi
+# Set permissions
+chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+chmod -R 755 /var/www/storage /var/www/bootstrap/cache
 
-# Verificar se APP_KEY existe, se não, gerar
-if [ -z "${APP_KEY}" ] || [ "${APP_KEY}" = "" ]; then
-    echo "Gerando APP_KEY..."
-    php artisan key:generate --force --no-interaction
-else
-    echo "APP_KEY já configurada."
+# Generate app key if needed
+if [ ! -f .env ]; then
+    cp .env.example .env
 fi
 
-# Executar migrations
-echo "Executando migrations..."
-php artisan migrate --force
+if ! grep -q "APP_KEY=" .env || [ "$(grep APP_KEY= .env | cut -d '=' -f2)" = "" ]; then
+    php artisan key:generate --force
+fi
 
-# Publicar assets do Telescope se necessário
-echo "Publicando assets do Telescope..."
-php artisan vendor:publish --tag=telescope-assets --force || true
+# Clear caches
+php artisan config:clear
+php artisan cache:clear
 
-# Otimizar configurações
-echo "Otimizando configurações..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
-echo "=== WEB CONTAINER PRONTO ==="
-
-# Iniciar PHP-FPM
+echo "Iniciando PHP-FPM..."
 exec php-fpm

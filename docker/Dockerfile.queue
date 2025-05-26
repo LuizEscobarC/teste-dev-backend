@@ -1,79 +1,39 @@
-# =============================================================================
-# DOCKERFILE PARA QUEUE WORKERS (Processamento Assíncrono)
-# =============================================================================
-# 
-# PROPÓSITO: Processar jobs em background (importação de dados climáticos)
-# BASE: php:8.2-cli (Command Line Interface)
-# CONTAINER: queue-workers-estech
-# FILAS: climate_data, default
-# 
-# OTIMIZAÇÕES PARA JOBS DE LONGA DURAÇÃO:
-# - PHP-CLI: Processo único contínuo, sem HTTP overhead
-# - Supervisor: Gerencia múltiplos workers com restart automático
-# - Sem limites de tempo para jobs grandes (CSV de milhares de linhas)
-# - Inicialização robusta com verificação de dependências
-# - Logs dedicados para debugging de jobs
-# - Procps para monitoramento de processos em background
-# 
-# WORKERS CONFIGURADOS:
-# - 2x climate-queue-worker: Processa importação de dados climáticos
-# - Jobs podem durar até 1 hora (max_time=3600)
-# - Restart automático em caso de falha
-# 
-# USO: Importação assíncrona de CSV, processamento de chunks de dados
-# =============================================================================
-
-# supervisor     Process manager para múltiplos workers
-# procps        Ferramentas de monitoramento ps, top, kill
-
 FROM php:8.2-cli
 
-# Install necessary extensions and process management tools
 RUN apt-get update && apt-get install -y \
-    libzip-dev \
-    zip \
-    unzip \
-    git \
-    curl \
     supervisor \
     procps \
     netcat-openbsd \
-    && docker-php-ext-install pdo pdo_mysql zip sockets \
+    zip \
+    unzip \
+    git \
+    libzip-dev \
+    sqlite3 \
+    libsqlite3-dev \
+    default-mysql-client \
+    && docker-php-ext-install pdo pdo_mysql pdo_sqlite zip sockets \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Composer for dependency management
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:2.7.6 /usr/bin/composer /usr/bin/composer
 
-# Set the working directory
 WORKDIR /var/www
 
 # Copy application code
 COPY . .
 
-# Copy supervisor configuration files
-# supervisord.conf: Configuração principal do supervisor
-# climate-queue.conf: Workers específicos para fila climate_data (2 processos)
+# Create directories and set permissions
+RUN mkdir -p storage/logs storage/framework/{cache,sessions,views} bootstrap/cache /var/log/supervisor \
+    && chmod -R 775 storage bootstrap/cache /var/log/supervisor \
+    && chown -R www-data:www-data storage bootstrap/cache
+
+# Copy supervisor configs
 COPY docker/config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/config/climate-queue.conf /etc/supervisor/conf.d/climate-queue.conf
-
-# Copy entrypoint script with robust initialization
-# - Aguarda banco de dados estar pronto
-# - Executa migrations automaticamente  
-# - Cacheia configurações para performance
-# - Inicia supervisor com todos os workers
 COPY docker/entrypoint-queue.sh /usr/local/bin/entrypoint-queue.sh
 RUN chmod +x /usr/local/bin/entrypoint-queue.sh
 
-# Set permissions for Laravel directories and create supervisor logs
-RUN  mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
-    && chmod -R 775 storage bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache \
-    && mkdir -p /var/log/supervisor
+USER root
 
-# Start supervisor with entrypoint (manages all queue workers)
-# Supervisor irá gerenciar os workers definidos em climate-queue.conf
-# Workers processam: php artisan queue:work redis --queue=climate_data
 ENTRYPOINT ["/usr/local/bin/entrypoint-queue.sh"]

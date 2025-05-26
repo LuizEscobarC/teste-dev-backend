@@ -36,9 +36,10 @@ class ClimateDataController extends Controller
             $cacheKey = 'climate_analysis_' . md5(json_encode($filters));
             $cacheTtl = config('cache.ttl.climate_analysis', 300);
 
-            $data = Cache::remember($cacheKey, $cacheTtl, function () use ($filters) {
-                return $this->climateDataService->getDailyAnalysis($filters);
-            });
+            $data = Cache::tags(['climate_data', 'climate_analysis'])
+                ->remember($cacheKey, $cacheTtl, function () use ($filters) {
+                    return $this->climateDataService->getDailyAnalysis($filters);
+                });
 
             return response()->json([
                 'message' => __('messages.success'),
@@ -87,8 +88,8 @@ class ClimateDataController extends Controller
                 ], 422);
             }
 
-            // Limpar cache relacionado
-            Cache::forget('climate_analysis_*');
+            // Invalidar cache relacionado
+            Cache::tags(['climate_data', 'climate_analysis'])->flush();
 
             return response()->json([
                 'message' => $message,

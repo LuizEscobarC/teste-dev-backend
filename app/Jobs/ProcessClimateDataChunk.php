@@ -9,6 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 class ProcessClimateDataChunk implements ShouldQueue
@@ -51,6 +52,8 @@ class ProcessClimateDataChunk implements ShouldQueue
             // Inserção em batch para melhor performance
             if (!empty($dataToInsert)) {
                 ClimateData::insert($dataToInsert);
+                
+                $this->invalidateClimateDataCache($this->source);
             }
 
             Log::info("Climate data chunk processed successfully", [
@@ -69,6 +72,26 @@ class ProcessClimateDataChunk implements ShouldQueue
             throw $e;
         }
     }
+    
+    /**
+     * Invalidar cache para dados climáticos inseridos em lote
+     */
+    private function invalidateClimateDataCache(string $source): void
+    {
+        $tags = [
+            'climate_data',
+            'climate_analysis',
+            "climate_source:{$source}",
+        ];
+
+        Cache::tags($tags)->flush();
+        
+        Log::info('Cache invalidated for ClimateData bulk insert via Job', [
+            'source' => $source,
+            'invalidated_tags' => $tags
+        ]);
+    }
+    
     private function isValidRow(array $row): bool
     {
         return isset($row['data']) && 
