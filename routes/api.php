@@ -85,6 +85,10 @@ Route::middleware('auth:sanctum')->group(function () {
     /// BULKS
     Route::delete('/job-applications/bulk-delete', [\App\Http\Controllers\Api\JobApplicationController::class, 'bulkDelete']);
     Route::patch('/job-applications/bulk-update-status', [\App\Http\Controllers\Api\JobApplicationController::class, 'bulkUpdateStatus']);
+
+    // Climate Data
+    Route::get('/climate-data/analysis', [\App\Http\Controllers\Api\ClimateDataController::class, 'analysis']);
+    Route::delete('/climate-data/bulk-delete', [\App\Http\Controllers\Api\ClimateDataController::class, 'bulkDelete']);
 });
 
 // Public job listings 

@@ -24,6 +24,10 @@ COPY docker/config/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 COPY . .
 
+# Copy entrypoint script for web container
+COPY docker/entrypoint-web.sh /usr/local/bin/entrypoint-web.sh
+RUN chmod +x /usr/local/bin/entrypoint-web.sh
+
 # Set permissions for storage and bootstrap/cache directories
 RUN  mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
     && chmod -R 775 storage bootstrap/cache \
@@ -32,4 +36,4 @@ RUN  mkdir -p storage/logs storage/framework/cache storage/framework/sessions st
 # Expose port 9000 for PHP-FPM
 EXPOSE 9000
 
-CMD ["php-fpm"]
+ENTRYPOINT ["/usr/local/bin/entrypoint-web.sh"]

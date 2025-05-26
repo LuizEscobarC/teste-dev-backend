@@ -17,7 +17,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Força JSON response para todas as rotas da API
+        $middleware->api(prepend: [
+            ForceJsonResponse::class,
+        ]);
+        
+        // Exclude specific routes from CSRF protection
+        $middleware->validateCsrfTokens(except: [
+            'telescope/*',
+            '/login',
+            '/',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->dontReport([
@@ -73,10 +83,20 @@ return Application::configure(basePath: dirname(__DIR__))
                     'error' => 'not_found',
                 ], 404),
 
-                $e instanceof \InvalidArgumentException => response()->json([
-                    'message' => $e->getMessage(),
-                    'error' => 'invalid_argument',
-                ], 422),
+                $e instanceof \InvalidArgumentException => (function () use ($e) {
+                    // Trata especificamente o erro "Route [login] not defined"
+                    if (str_contains($e->getMessage(), 'Route [login] not defined')) {
+                        return response()->json([
+                            'message' => 'Acesso não autorizado. Esta é uma API, use autenticação via token.',
+                            'error' => 'authentication_required',
+                        ], 401);
+                    }
+                    
+                    return response()->json([
+                        'message' => $e->getMessage(),
+                        'error' => 'invalid_argument',
+                    ], 422);
+                })(),
 
                 $e instanceof \Illuminate\Database\QueryException => response()->json([
                     'message' => 'Erro de consulta ao banco de dados.',

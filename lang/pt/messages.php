@@ -92,4 +92,13 @@ return [
     'User' => 'Usuário',
     'JobListing' => 'Vaga de Emprego', 
     'JobApplication' => 'Candidatura',
+
+    // Importação de dados climáticos
+    'file_not_found' => 'Arquivo não encontrado: :file',
+    'invalid_file_format' => 'Formato de arquivo inválido. Apenas arquivos CSV são aceitos.',
+    'starting_import' => 'Iniciando importação do arquivo: :file',
+    'import_completed' => 'Importação concluída! :rows registros processados em :chunks chunks.',
+    'check_queue_status' => 'Verifique o status da fila ":queue" para acompanhar o progresso.',
+    'import_failed' => 'Falha na importação: :error',
+    'invalid_csv_header' => 'Cabeçalho do CSV inválido. Esperado: data, temperatura',
 ];
